@@ -1,7 +1,7 @@
 # Technical Specification: Document ingestion pipeline and grounded Q&A CLI
 
 - **Functional Specification:** [functional-spec.md](./functional-spec.md)
-- **Status:** Approved
+- **Status:** Completed
 - **Author(s):** Dona Shterjova, with the `python-backend` and `azure-infra` specialists
 
 ---

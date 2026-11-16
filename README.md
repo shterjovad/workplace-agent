@@ -2,7 +2,7 @@
 
 A command-line assistant that ingests company policy PDFs into Azure AI Search and answers employee questions with cited, grounded answers. It is a portfolio project built to show an end-to-end Azure AI stack: keyless auth, idempotent ingestion, hybrid retrieval, deterministic answer validation, infrastructure as code, and a measured evaluation.
 
-**Status:** Work in progress. Spec 1 (document ingestion + grounded Q&A CLI) is complete and deployed on Azure; the agent, Microsoft Graph and Teams features are on the roadmap.
+**Status:** In progress. Document ingestion and cited Q&A are built, tested and deployed on Azure. Next: an agent API, Microsoft Graph mail/calendar tools with human approval, and a Teams app.
 
 Author: Dona Shterjova
 

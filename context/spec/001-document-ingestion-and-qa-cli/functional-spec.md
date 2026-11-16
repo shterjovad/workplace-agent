@@ -1,7 +1,7 @@
 # Functional Specification: Document ingestion pipeline and grounded Q&A CLI
 
 - **Topic:** Making a set of company policy PDFs searchable, and answering questions about them from the command line with answers that cite the document and page.
-- **Status:** Draft
+- **Status:** Completed
 - **Author:** Dona Shterjova
 
 ---
@@ -54,12 +54,12 @@ These match the product's success metrics.
     - the total number of passages now in the library
    
   - **Acceptance Criteria:**
-    - [ ] Given the document folder contains 15 readable PDFs and the library is empty, when the developer runs `ingest`, then the summary shows 15 new, 0 updated, 0 unchanged, 0 removed and 0 failed documents, and a passage total greater than 0.
-    - [ ] Given a 12-page document whose 12th page contains a sentence found nowhere else, when the developer runs `ingest` and then asks a question that only that sentence answers, then the answer cites that document at "p. 12".
-    - [ ] Given a document has a table that is the only place a specific figure appears (for example a daily meal allowance amount), when the developer runs `ingest` and then asks for that figure, then the answer contains the figure and cites the page the table is on.
-    - [ ] Given a document has a figure from an image, such as a screenshot or a scanned notice, whose text appears nowhere else, when the developer runs `ingest` and then asks about that text, then the answer contains it and cites the page the image is on.
-    - [ ] Given the folder contains 15 PDFs and one Word document, when the developer runs `ingest`, then the summary lists the Word document as "skipped (not a PDF)" and the run finishes with "Ingest finished successfully."
-    - [ ] Given both the document folder and the library are empty, when the developer runs `ingest`, then they see "No documents found in the document folder." and the run finishes successfully.
+    - [x] Given the document folder contains 15 readable PDFs and the library is empty, when the developer runs `ingest`, then the summary shows 15 new, 0 updated, 0 unchanged, 0 removed and 0 failed documents, and a passage total greater than 0.
+    - [x] Given a 12-page document whose 12th page contains a sentence found nowhere else, when the developer runs `ingest` and then asks a question that only that sentence answers, then the answer cites that document at "p. 12".
+    - [x] Given a document has a table that is the only place a specific figure appears (for example a daily meal allowance amount), when the developer runs `ingest` and then asks for that figure, then the answer contains the figure and cites the page the table is on.
+    - [x] Given a document has a figure from an image, such as a screenshot or a scanned notice, whose text appears nowhere else, when the developer runs `ingest` and then asks about that text, then the answer contains it and cites the page the image is on.
+    - [x] Given the folder contains 15 PDFs and one Word document, when the developer runs `ingest`, then the summary lists the Word document as "skipped (not a PDF)" and the run finishes with "Ingest finished successfully."
+    - [x] Given both the document folder and the library are empty, when the developer runs `ingest`, then they see "No documents found in the document folder." and the run finishes successfully.
 
 ### 2.2 Keep the library in step with the folder on every run
 
@@ -69,12 +69,12 @@ These match the product's success metrics.
   - A document that became shorter keeps nothing from the pages that no longer exist.
   - A document removed from the folder is removed from the library completely on the next run. If the folder is emptied, every document is removed.
   - **Acceptance Criteria:**
-    - [ ] Given `ingest` has already completed for 15 documents and nothing in the folder has changed, when the developer runs `ingest` again, then the summary shows 15 unchanged and 0 new, updated, removed and failed.
-    - [ ] Given the HR leave policy is replaced with a version that changes the carry-over limit from 5 days to 10 days, when the developer runs `ingest` and asks "How many vacation days can I carry over?", then the summary shows 1 updated document and the answer gives 10 days as the limit, without giving 5 days as the current limit.
-    - [ ] Given a document is deleted from the folder, when the developer runs `ingest` and then asks a question that only that document could answer, then the summary shows 1 removed document and the reply is the not-found answer.
-    - [ ] Given a 12-page document is replaced with a version that keeps only pages 1–8, when the developer runs `ingest` and asks a question only the old 12th page answered, then the summary shows 1 updated document and the reply is the not-found answer.
-    - [ ] Given a document is renamed in the folder without changing its contents, when the developer runs `ingest`, then the summary shows 1 removed and 1 new document, and answers cite the new title.
-    - [ ] Given the library holds 15 documents and the folder is then emptied, when the developer runs `ingest`, then the summary shows 15 removed and the message "No documents found in the document folder."
+    - [x] Given `ingest` has already completed for 15 documents and nothing in the folder has changed, when the developer runs `ingest` again, then the summary shows 15 unchanged and 0 new, updated, removed and failed.
+    - [x] Given the HR leave policy is replaced with a version that changes the carry-over limit from 5 days to 10 days, when the developer runs `ingest` and asks "How many vacation days can I carry over?", then the summary shows 1 updated document and the answer gives 10 days as the limit, without giving 5 days as the current limit.
+    - [x] Given a document is deleted from the folder, when the developer runs `ingest` and then asks a question that only that document could answer, then the summary shows 1 removed document and the reply is the not-found answer.
+    - [x] Given a 12-page document is replaced with a version that keeps only pages 1–8, when the developer runs `ingest` and asks a question only the old 12th page answered, then the summary shows 1 updated document and the reply is the not-found answer.
+    - [x] Given a document is renamed in the folder without changing its contents, when the developer runs `ingest`, then the summary shows 1 removed and 1 new document, and answers cite the new title.
+    - [x] Given the library holds 15 documents and the folder is then emptied, when the developer runs `ingest`, then the summary shows 15 removed and the message "No documents found in the document folder."
 
 ### 2.3 Handle unreadable documents without stopping
 
@@ -87,11 +87,11 @@ These match the product's success metrics.
   - A run with any failed document ends with the message "Ingest finished with N failed document(s)." and finishes with a failure result.
   - A run with no failed documents ends with the message "Ingest finished successfully." and finishes successfully.
   - **Acceptance Criteria:**
-    - [ ] Given the folder holds 14 readable PDFs and 1 password-protected PDF, and the library is empty, when the developer runs `ingest`, then the summary shows 14 new and 1 failed, lists the protected file with the reason "password-protected", ends with "Ingest finished with 1 failed document(s).", and the run finishes with a failure result.
-    - [ ] Given the folder holds a damaged file named like a PDF (for example a text file renamed to "Policy.pdf"), when the developer runs `ingest`, then that file is listed as failed with the reason "not a readable PDF" and all other documents are still processed.
-    - [ ] Given the developer's internet connection is switched off part-way through a run, when the run ends, then each document that could not be read is listed with the reason "temporary problem — try again later".
-    - [ ] Given every PDF is readable, when the developer runs `ingest`, then the run ends with "Ingest finished successfully." and finishes successfully.
-    - [ ] Given a PDF failed in an earlier run and the developer then replaces it with a readable version, when the developer runs `ingest` again, then that document is counted as new and no longer appears in the failed list.
+    - [x] Given the folder holds 14 readable PDFs and 1 password-protected PDF, and the library is empty, when the developer runs `ingest`, then the summary shows 14 new and 1 failed, lists the protected file with the reason "password-protected", ends with "Ingest finished with 1 failed document(s).", and the run finishes with a failure result.
+    - [x] Given the folder holds a damaged file named like a PDF (for example a text file renamed to "Policy.pdf"), when the developer runs `ingest`, then that file is listed as failed with the reason "not a readable PDF" and all other documents are still processed.
+    - [x] Given the developer's internet connection is switched off part-way through a run, when the run ends, then each document that could not be read is listed with the reason "temporary problem — try again later".
+    - [x] Given every PDF is readable, when the developer runs `ingest`, then the run ends with "Ingest finished successfully." and finishes successfully.
+    - [x] Given a PDF failed in an earlier run and the developer then replaces it with a readable version, when the developer runs `ingest` again, then that document is counted as new and no longer appears in the failed list.
 
 ### 2.4 Ask a question and get a cited answer (`ask`)
 
@@ -107,13 +107,13 @@ These match the product's success metrics.
   - When the documents answer only part of the question, the reply answers that part with citations, then names the part it couldn't find in one final sentence: "I couldn't find information about <the missing part> in the company documents."
   - The 8-second response-time target is measured by `eval` across all test questions, not judged on individual `ask` runs.
   - **Acceptance Criteria:**
-    - [ ] Given the HR leave policy has been ingested, when the developer runs `ask "How many vacation days can I carry over?"`, then they see an answer of 150 words or fewer (excluding markers and Sources), in which every sentence carries at least one marker like [1], followed by a Sources list whose lines read "[n] Document title, p. N" or "[n] Document title, pp. N–M".
-    - [ ] Given the developer has run `ask "How many vacation days can I carry over?"`, when they open each cited document at each cited page, then every fact the answer attributes to that citation is on that page.
-    - [ ] Given the travel policy states two different facts on the same page, when the developer asks a question whose answer uses both facts, then the Sources list shows that document and page only once.
-    - [ ] When the developer asks a question that none of the documents answer (for example "What is the CEO's favourite food?"), then they see exactly "I couldn't find this in the company documents." with no Sources list.
-    - [ ] Given the documents state the meal allowance but say nothing about a parking allowance, when the developer asks "What are the meal and parking allowances?", then the answer gives the meal allowance with a citation and ends with "I couldn't find information about the parking allowance in the company documents."
-    - [ ] When the developer runs `ask` with no question, with `ask ""`, or with a question made only of spaces, then they see "Please type a question." and no answer is attempted.
-    - [ ] Given the library holds no documents (because `ingest` was never run, the folder was emptied, or every document failed), when the developer runs `ask` with any question, then they see "The library has no documents yet. Run ingest first."
+    - [x] Given the HR leave policy has been ingested, when the developer runs `ask "How many vacation days can I carry over?"`, then they see an answer of 150 words or fewer (excluding markers and Sources), in which every sentence carries at least one marker like [1], followed by a Sources list whose lines read "[n] Document title, p. N" or "[n] Document title, pp. N–M".
+    - [x] Given the developer has run `ask "How many vacation days can I carry over?"`, when they open each cited document at each cited page, then every fact the answer attributes to that citation is on that page.
+    - [x] Given the travel policy states two different facts on the same page, when the developer asks a question whose answer uses both facts, then the Sources list shows that document and page only once.
+    - [x] When the developer asks a question that none of the documents answer (for example "What is the CEO's favourite food?"), then they see exactly "I couldn't find this in the company documents." with no Sources list.
+    - [x] Given the documents state the meal allowance but say nothing about a parking allowance, when the developer asks "What are the meal and parking allowances?", then the answer gives the meal allowance with a citation and ends with "I couldn't find information about the parking allowance in the company documents."
+    - [x] When the developer runs `ask` with no question, with `ask ""`, or with a question made only of spaces, then they see "Please type a question." and no answer is attempted.
+    - [x] Given the library holds no documents (because `ingest` was never run, the folder was emptied, or every document failed), when the developer runs `ask` with any question, then they see "The library has no documents yet. Run ingest first."
 
 ### 2.5 Measure answer quality (`eval`)
 
@@ -133,12 +133,12 @@ These match the product's success metrics.
     The first three totals are labelled "meets target" or "below target".
   - If any target is missed, the evaluation run finishes with a failure result. Otherwise it finishes successfully.
   - **Acceptance Criteria:**
-    - [ ] Given the documents are ingested and the evaluation set has 20 questions, when the developer runs `eval`, then they see 20 result lines and four totals: hit rate, citation presence and p95 each labelled "meets target" or "below target", and p50 labelled "for information".
-    - [ ] Given an unanswerable test question gets the not-found reply, when the developer runs `eval`, then that question's line shows found as yes and cited as "n/a".
-    - [ ] Given a score falls below its target, when `eval` finishes, then that score is labelled "below target" and the run finishes with a failure result.
-    - [ ] Given all three targeted scores meet their targets, when `eval` finishes, then the run finishes successfully.
-    - [ ] Given the evaluation file is missing or contains no questions, when the developer runs `eval`, then they see "No evaluation questions found.", no scores are shown, and the run finishes with a failure result.
-    - [ ] Given the library holds no documents, when the developer runs `eval`, then they see "The library has no documents yet. Run ingest first." and the run finishes with a failure result.
+    - [x] Given the documents are ingested and the evaluation set has 20 questions, when the developer runs `eval`, then they see 20 result lines and four totals: hit rate, citation presence and p95 each labelled "meets target" or "below target", and p50 labelled "for information".
+    - [x] Given an unanswerable test question gets the not-found reply, when the developer runs `eval`, then that question's line shows found as yes and cited as "n/a".
+    - [x] Given a score falls below its target, when `eval` finishes, then that score is labelled "below target" and the run finishes with a failure result.
+    - [x] Given all three targeted scores meet their targets, when `eval` finishes, then the run finishes successfully.
+    - [x] Given the evaluation file is missing or contains no questions, when the developer runs `eval`, then they see "No evaluation questions found.", no scores are shown, and the run finishes with a failure result.
+    - [x] Given the library holds no documents, when the developer runs `eval`, then they see "The library has no documents yet. Run ingest first." and the run finishes with a failure result.
 
 ---
 
@@ -165,6 +165,29 @@ These match the product's success metrics.
 - Documents and questions in languages other than English.
 - Several users working at the same time.
 - Response-time guarantees for an individual question; the 8-second target applies to the evaluation set as a whole.
+
+---
+
+## Verification (2026-11-16, `/awos:verify`)
+
+All 30 acceptance criteria were verified against the deployed Azure environment (Sweden Central, gpt-5-mini, AI Search free tier, 12 sample PDFs / 40 passages).
+
+- **Live CLI checks run during verification:**
+  - `ingest`: 12 unchanged, exit 0.
+  - `ask` carry-over: 5 days, cites HR Leave Policy p. 1.
+  - `ask` meal allowance: EUR 45 / 60, cites Travel and Expenses Policy p. 1, a single source line for two facts.
+  - `ask` retreat: Lake Bled, cites Employee Handbook p. 12.
+  - `ask` image text: 7741, cites IT Security Policy p. 1.
+  - `ask` CEO: the exact not-found reply.
+  - `ask` meal + parking: a partial answer ending "I couldn't find information about the parking allowance in the company documents."
+  - `ask "   "`: "Please type a question.", exit 2.
+  - `eval` with an empty file: "No evaluation questions found.", exit 1.
+  - Live `eval`: hit rate 94.1%, citation presence 94.1%, p95 3.4 s, "Evaluation passed.", exit 0.
+- **Cited pages checked with pypdf:** HR Leave Policy p. 1 contains "5 unused vacation days", Travel and Expenses Policy p. 1 contains "EUR 45", and Employee Handbook p. 12 contains "Lake Bled".
+- **Criteria that change data** (updated, shortened, renamed, deleted, emptied folder, password-protected, damaged, connection loss, failed-then-fixed, empty library):
+  - Verified live during the Slice 5 and 6 checks (see `tasks.md`).
+  - Covered by the CLI-level acceptance suite in `tests/acceptance/` (real pipeline with in-memory Azure adapters).
+- **Test runs during verification:** `pytest -m "not integration"` gave 155 passed; `pytest -m integration` (live Azure) gave 11 passed.
 
 ---
 
