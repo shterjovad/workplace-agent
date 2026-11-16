@@ -2,9 +2,30 @@
 
 A command-line assistant that ingests company policy PDFs into Azure AI Search and answers employee questions with cited, grounded answers. It is a portfolio project built to show an end-to-end Azure AI stack: keyless auth, idempotent ingestion, hybrid retrieval, deterministic answer validation, infrastructure as code, and a measured evaluation.
 
-**Status:** In progress. Document ingestion and cited Q&A are built, tested and deployed on Azure. Next: an agent API, Microsoft Graph mail/calendar tools with human approval, and a Teams app.
-
 Author: Dona Shterjova
+
+## Completed
+
+- Layout-aware PDF ingestion with Azure AI Document Intelligence (tables, text inside images, page numbers)
+- Incremental re-ingest: new, updated, shortened, renamed and deleted documents, with crash-safe writes
+- Error handling for password-protected, damaged and temporarily unreadable files, with retries
+- Hybrid search (keyword + vector) on Azure AI Search
+- Cited answers with gpt-5-mini: page-level citations, not-found and partial answers, validated in code
+- Evaluation command with measured targets (hit rate, citation presence, p95 latency)
+- Keyless Entra ID authentication to every Azure service
+- Infrastructure as code with Bicep, plus deploy and teardown scripts
+- OpenTelemetry tracing to Application Insights
+- CI on GitHub Actions and Azure DevOps; unit, integration and acceptance tests
+
+## Roadmap
+
+- API on Azure Container Apps
+- Microsoft Foundry agent
+- Entra sign-in plus Microsoft Graph mail and calendar, with user approval
+- SharePoint ingestion with permission filtering
+- QLoRA-fine-tuned intent router
+- Microsoft Teams integration
+
 
 ## Tech
 
@@ -104,15 +125,6 @@ scripts/teardown.sh   # asks you to type the resource group name; deletes it and
 ```
 
 The Azure for Students credit expires on **2026-11-27**. Tear down before then, and whenever the project is idle.
-
-## Roadmap (planned, not built)
-
-- API on Azure Container Apps
-- Microsoft Foundry agent
-- Entra sign-in plus Microsoft Graph mail and calendar, with user approval
-- SharePoint ingestion with permission filtering
-- QLoRA-fine-tuned intent router
-- Microsoft Teams integration
 
 ## Project structure
 
