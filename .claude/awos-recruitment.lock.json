@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "project_id": "5818cb4e-b1d2-4c37-a49d-7c776143bf34",
+  "skills": {
+    "fastapi-best-practices": {
+      "server": "https://recruitment.awos.provectus.pro",
+      "installed_at": "2026-11-16T15:28:34.503Z",
+      "hash": "a291e024bacf69e349309969cee0c089794a659930e21cf4654c239ed87ce3b3",
+      "files": {
+        "SKILL.md": "ef6b2537d8ec3476579210d212e30cd20e7c179dcdae97deaff76f1b8a1bca85",
+        "references/async-patterns.md": "0ff9b4eaa7b55a931ad1c55f0b47a4c3ab5018dae960c1e20408ea43fa381cf6",
+        "references/dependencies.md": "2a7f2505e271b2e28fa93722f666e69c02e71e3a6d7c1e7e0ca3716276aa2b99",
+        "references/project-conventions.md": "4499967a12395803fb72567acade66b03a1dc5beba82ec2166739dc0ac0991d0",
+        "references/pydantic-patterns.md": "e4700d9d6d35fec47c1520835330d5c0278bbdaae80bb40302eb02495abff7bd"
+      },
+      "commit": "5ece034",
+      "released": "2026-10-08"
+    },
+    "modern-python-development": {
+      "server": "https://recruitment.awos.provectus.pro",
+      "installed_at": "2026-11-16T15:28:34.503Z",
+      "hash": "742ee22f6a1ad8b6f39fd76c1054aeb50994a16ce688d48ddb5fd6ccdb3c89b9",
+      "files": {
+        "SKILL.md": "b6292a67555a2ca13976cb350f5225141c9f167e41aeb5c38347409f7e3c588a",
+        "references/modern-syntax.md": "b1095e2bd4304f4fe66c8e9cf9b39e5c37e3cc528a0151cf8eeb92bfa71e43a1",
+        "references/patterns.md": "feba8acf28533b716995944ae0fadac2d3414776ceb5dd2ec632dc1557813efe",
+        "references/project-structure.md": "92b95b7fdb93362c3d1073ec5866a5a376de9b59ec4b14136f331276595fe820",
+        "references/type-hints.md": "26de170586a648a4fa632dca6656e5093be7d6aff99fe606a868f3bd97f03ec4"
+      },
+      "commit": "b1c8377",
+      "released": "2026-10-08"
+    },
+    "pytest-best-practices": {
+      "server": "https://recruitment.awos.provectus.pro",
+      "installed_at": "2026-11-16T15:28:34.503Z",
+      "hash": "8fe1e09a0aa2ebc4e3fb6876745c4a7088bc2188e1d6b15babc5bcb3b3546e4e",
+      "files": {
+        "SKILL.md": "a09258fc354a954b9344a049072342f4e8f81abd6fd606dc58a6307995c457a4",
+        "references/fixtures.md": "befdcebecd6346fd218d3b1c78b3f61b7adb5f240dbc254818f4adf1fa751c13",
+        "references/mocking.md": "ec546b9752a0df35377a0163abfe046abec22a57cbd3c356b6c65bc83c30d900",
+        "references/parametrization.md": "27518229538de050c2759d9f88c6c3d894ec3afbd579e5abaff223aa96cecf09",
+        "references/patterns.md": "2cc6a7a25e7539e705a105b0eba9cff4e7d1010f7cad3faf6031dee2f53d9463"
+      },
+      "commit": "aac82ce",
+      "released": "2026-09-24"
+    }
+  }
+}

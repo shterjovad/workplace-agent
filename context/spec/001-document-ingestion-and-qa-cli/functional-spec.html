@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document ingestion pipeline and grounded Q&amp;A CLI</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f7f9; --ink: #1c2430; --muted: #5b6572;
+    --line: #e3e7ec; --accent: #2563eb;
+    --src-interview: #2563eb; --src-code: #7c3aed; --src-web: #0f766e; --src-kb: #b45309;
+    --ok: #15803d; --pending: #9aa3ad; --warn: #b45309; --chip-ink: #ffffff;
+}
+  @media (prefers-color-scheme: dark) {
+    :root {
+    --bg: #10151c; --panel: #171e27; --ink: #e8edf3; --muted: #9aa7b5;
+    --line: #26303c; --accent: #60a5fa;
+    --src-interview: #60a5fa; --src-code: #bda6f5; --src-web: #4fd1c0; --src-kb: #f0b26b;
+    --ok: #4ade80; --pending: #64748b; --warn: #f0b26b; --chip-ink: #10151c;
+}
+  }
+  :root[data-theme='dark'] {
+    --bg: #10151c; --panel: #171e27; --ink: #e8edf3; --muted: #9aa7b5;
+    --line: #26303c; --accent: #60a5fa;
+    --src-interview: #60a5fa; --src-code: #bda6f5; --src-web: #4fd1c0; --src-kb: #f0b26b;
+    --ok: #4ade80; --pending: #64748b; --warn: #f0b26b; --chip-ink: #10151c;
+}
+  :root[data-theme='light'] {
+    --bg: #ffffff; --panel: #f6f7f9; --ink: #1c2430; --muted: #5b6572;
+    --line: #e3e7ec; --accent: #2563eb;
+    --src-interview: #2563eb; --src-code: #7c3aed; --src-web: #0f766e; --src-kb: #b45309;
+    --ok: #15803d; --pending: #9aa3ad; --warn: #b45309; --chip-ink: #ffffff;
+}
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 28px 80px; }
+  @media (max-width: 700px) { main { padding: 20px 16px 60px; } }
+  h1 { font-size: 26px; line-height: 1.25; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 42px 0 12px; }
+  h4 { margin: 14px 0 6px; font-size: 14px; }
+  .meta { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+  .statusbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 6px; }
+  .status-chip { font-size: 12.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--warn); color: var(--chip-ink); }
+  .progress { font-size: 13px; color: var(--muted); }
+  .bar { display: inline-block; width: 140px; height: 7px; border-radius: 4px; background: var(--line); vertical-align: middle; margin: 0 6px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .src { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--chip-ink); white-space: nowrap; }
+  .src.interview { background: var(--src-interview); }
+  .src.code { background: var(--src-code); }
+  .src.web { background: var(--src-web); }
+  .src.kb { background: var(--src-kb); }
+  .glance { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px; margin-top: 14px; }
+  .glance ul { margin: 8px 0 0; padding-left: 20px; }
+  .glance li { margin: 6px 0; }
+  table.decisions { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+  table.decisions th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); }
+  table.decisions td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.decisions td:first-child { font-weight: 600; width: 26%; }
+  .why { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
+  .diagram-wrap { overflow-x: auto; margin-top: 12px; }
+  .diagram-note { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .diagram-wrap svg { max-width: 100%; height: auto; display: block; }
+  .d-box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+  .d-label { fill: var(--ink); font-size: 13px; font-weight: 600; }
+  .d-sublabel { fill: var(--muted); font-size: 11.5px; }
+  .d-arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  .d-arrow.dashed { stroke-dasharray: 5 4; }
+  .d-head { fill: var(--muted); }
+  .tabs { margin-top: 12px; }
+  .tabbar { display: flex; gap: 4px; border-bottom: 2px solid var(--line); }
+  .tabbar button { appearance: none; border: none; background: none; color: var(--muted); font: 600 14px/1.4 inherit; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tabbar button.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .tabbar button .count { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  .tabpanel { display: none; padding: 6px 2px 0; }
+  .tabpanel.active { display: block; }
+  ul.findings { list-style: none; margin: 10px 0 0; padding: 0; }
+  ul.findings li { margin: 0; padding: 12px 4px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+  ul.findings li:last-child { border-bottom: none; }
+  .impact { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .impact a { color: var(--accent); text-decoration: none; }
+  .impact a:hover { text-decoration: underline; }
+  .empty { color: var(--muted); font-size: 14px; padding: 16px 4px; }
+  .req { border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px; margin: 16px 0; }
+  .req h3 { margin: 0 0 4px; font-size: 16.5px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .req h3 .provrow { display: flex; gap: 5px; }
+  .req .oneliner { margin: 2px 0 6px; }
+  .req .prose { color: var(--muted); font-size: 14px; margin: 0 0 4px; }
+  details.ac { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  details.ac summary { cursor: pointer; font-size: 13.5px; color: var(--accent); font-weight: 600; }
+  details.ac ul { list-style: none; padding-left: 4px; margin: 10px 0 2px; }
+  details.ac li { margin: 10px 0; padding-left: 26px; position: relative; font-size: 14.5px; }
+  details.ac li::before { content: "☐"; position: absolute; left: 2px; top: 0; color: var(--pending); font-size: 15px; }
+  details.ac li.done::before { content: "☑"; color: var(--ok); }
+  details.ac li b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 10px; }
+  @media (max-width: 700px) { .cols { grid-template-columns: 1fr; } }
+  .cols h4 { margin: 0 0 6px; }
+  .cols ul { margin: 0; padding-left: 20px; font-size: 14px; }
+  .cols li { margin: 5px 0; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+  code { background: var(--panel); border-radius: 4px; padding: 1px 5px; font-size: .92em; }
+  .tablewrap { overflow-x: auto; margin: 12px 0; }
+  table.md { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+  table.md th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 12px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+  table.md td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.md tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<main>
+<h1>Document ingestion pipeline and grounded Q&amp;A CLI</h1>
+<div class="meta">Topic: Making a set of company policy PDFs searchable, and answering questions about them from the command line with answers that cite the document and page. &nbsp;·&nbsp; Author: Dona Shterjova</div>
+<div class="statusbar">
+  <span class="status-chip">Draft</span>
+  <span class="progress">Verification: <span class="bar"><i style="width:0%"></i></span> 0 of 30 criteria verified</span>
+</div>
+<h2 id="glance">At a glance</h2>
+<div class="glance"><ul><li>A developer puts 10–20 sample company policy PDFs in one online document folder.</li>
+<li><code>ingest</code> makes every page searchable, including tables and text in images, and keeps search in step with the folder on every run.</li>
+<li><code>ask</code> gives a short answer (150 words max) built only from the documents, with numbered citations to the document title and page.</li>
+<li>When the documents don't hold the answer, it says so instead of guessing; partial answers name what's missing.</li>
+<li><code>eval</code> runs 20 test questions and checks hit rate, citations and response time against targets.</li></ul></div>
+<h2 id="decisions">Decisions to approve</h2>
+<p class="meta">These are the judgment calls in this spec — the things a reviewer might want to challenge. Everything else follows from them.</p>
+<table class="decisions">
+  <tr><th>Decision</th><th>Choice</th><th>Source</th></tr>
+<tr>
+    <td>Deleted documents</td>
+    <td>Removed from search completely on the next run<span class="why">A deleted policy must never be quoted</span></td>
+    <td><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Partly failed runs</td>
+    <td>Finish all other documents, list failures with reasons, then report failure<span class="why">Automated checks must tell a partial run from a clean one</span></td>
+    <td><span class="src code">Codebase</span> <span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Citation format</td>
+    <td>[1] markers plus a Sources list: &quot;Document title, p. N&quot; or &quot;pp. N–M&quot;<span class="why">Common pattern in reference RAG apps; checkable to the page</span></td>
+    <td><span class="src web">Web</span> <span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Document title and page</td>
+    <td>Title is the file name; page is the position in the file<span class="why">Predictable and testable without reading PDF metadata</span></td>
+    <td><span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Not-found and partial answers</td>
+    <td>Fixed not-found sentence; partial answers name the missing part<span class="why">Trust: never guess</span></td>
+    <td><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Non-PDF files</td>
+    <td>Skipped and listed, without failing the run<span class="why">A stray file shouldn't make every run fail</span></td>
+    <td><span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Evaluation</td>
+    <td>20 questions (3 unanswerable); hit rate and citations at least 90%, p95 at most 8.0 s<span class="why">Matches the product success metrics</span></td>
+    <td><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></td>
+  </tr>
+<tr>
+    <td>Boundaries</td>
+    <td>Command line only, one developer, English PDFs<span class="why">1-day build, and the cloud credit ends on 27 Nov</span></td>
+    <td><span class="src interview">Interview</span></td>
+  </tr>
+</table>
+
+<h2 id="findings">Findings that shaped this spec</h2>
+<p class="meta">What the research phase discovered and where it landed. The technical detail behind each finding lives in <code>research-notes.md</code>.</p>
+<div class="tabs">
+  <div class="tabbar" role="tablist">
+<button class="active" role="tab" onclick="tab(0, this)">Codebase exploration <span class="count">· 2</span></button>
+<button class="" role="tab" onclick="tab(1, this)">Web research <span class="count">· 3</span></button>
+<button class="" role="tab" onclick="tab(2, this)">Knowledge base <span class="count">· 0</span></button>
+  </div>
+<div class="tabpanel active"><ul class="findings"><li>No application code exists yet; the plan only covered documents that got shorter, not deleted ones.<span class="impact">→ <a href="#r22">Added explicit removal of deleted and renamed documents.</a></span></li>
+<li>The plan said a run with any failed document should end in failure.<span class="impact">→ <a href="#r23">Defined the partly failed run behaviour.</a></span></li></ul></div>
+<div class="tabpanel "><ul class="findings"><li>The free PDF-reader tier reads only the first 2 pages; password-protected PDFs can't be read.<span class="impact">→ <a href="#r21">Required every page to be readable, and added the password-protected reason.</a></span></li>
+<li>Reference RAG apps use numbered citations and a &quot;say you don't know&quot; rule.<span class="impact">→ <a href="#r24">Defined the citation format and not-found reply.</a></span></li>
+<li>Around 20 test questions only catch large changes.<span class="impact">→ <a href="#r25">Fixed the set at exactly 20 with clear targets.</a></span></li></ul></div>
+<div class="tabpanel "><div class="empty">Not configured: this is a solo project with no tracker or wiki.</div></div>
+</div>
+<h2>Requirements</h2>
+<section class="req" id="r21">
+  <h3><span>2.1 Make the documents searchable (<code>ingest</code>)</span><span class="provrow"><span class="src code">Codebase</span> <span class="src web">Web</span></span></h3>
+  <p class="oneliner">One command reads every PDF page into the searchable library and prints a summary.</p>
+  <p class="prose"><strong>As a</strong> developer, <strong>I want to</strong> run one command that reads every PDF in the document folder and adds it to the searchable library, <strong>so that</strong> questions can be answered from any page of any document.</p>
+  <details class="ac"><summary>Acceptance criteria — 6 (0 verified)</summary><ul>
+<li class=""><b>First run counts</b>Given the document folder contains 15 readable PDFs and the library is empty, when the developer runs <code>ingest</code>, then the summary shows 15 new, 0 updated, 0 unchanged, 0 removed and 0 failed documents, and a passage total greater than 0.</li>
+<li class=""><b>Last-page content</b>Given a 12-page document whose 12th page contains a sentence found nowhere else, when the developer runs <code>ingest</code> and then asks a question that only that sentence answers, then the answer cites that document at &quot;p. 12&quot;.</li>
+<li class=""><b>Table figure</b>Given a document has a table that is the only place a specific figure appears (for example a daily meal allowance amount), when the developer runs <code>ingest</code> and then asks for that figure, then the answer contains the figure and cites the page the table is on.</li>
+<li class=""><b>Text in image</b>Given a document has a figure from an image, such as a screenshot or a scanned notice, whose text appears nowhere else, when the developer runs <code>ingest</code> and then asks about that text, then the answer contains it and cites the page the image is on.</li>
+<li class=""><b>Non-PDF skipped</b>Given the folder contains 15 PDFs and one Word document, when the developer runs <code>ingest</code>, then the summary lists the Word document as &quot;skipped (not a PDF)&quot; and the run finishes with &quot;Ingest finished successfully.&quot;</li>
+<li class=""><b>Empty folder</b>Given both the document folder and the library are empty, when the developer runs <code>ingest</code>, then they see &quot;No documents found in the document folder.&quot; and the run finishes successfully.</li>
+</ul></details>
+</section>
+<section class="req" id="r22">
+  <h3><span>2.2 Keep the library in step with the folder on every run</span><span class="provrow"><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></span></h3>
+  <p class="oneliner">Re-runs process only changes and remove what's gone.</p>
+  <p class="prose"><strong>As a</strong> developer, <strong>I want</strong> re-running <code>ingest</code> to process only what changed in the folder, <strong>so that</strong> runs are quick and the library never answers from outdated or deleted documents.</p>
+  <details class="ac"><summary>Acceptance criteria — 6 (0 verified)</summary><ul>
+<li class=""><b>Nothing changed</b>Given <code>ingest</code> has already completed for 15 documents and nothing in the folder has changed, when the developer runs <code>ingest</code> again, then the summary shows 15 unchanged and 0 new, updated, removed and failed.</li>
+<li class=""><b>Updated policy</b>Given the HR leave policy is replaced with a version that changes the carry-over limit from 5 days to 10 days, when the developer runs <code>ingest</code> and asks &quot;How many vacation days can I carry over?&quot;, then the summary shows 1 updated document and the answer gives 10 days as the limit, without giving 5 days as the current limit.</li>
+<li class=""><b>Deleted document</b>Given a document is deleted from the folder, when the developer runs <code>ingest</code> and then asks a question that only that document could answer, then the summary shows 1 removed document and the reply is the not-found answer.</li>
+<li class=""><b>Shortened document</b>Given a 12-page document is replaced with a version that keeps only pages 1–8, when the developer runs <code>ingest</code> and asks a question only the old 12th page answered, then the summary shows 1 updated document and the reply is the not-found answer.</li>
+<li class=""><b>Renamed document</b>Given a document is renamed in the folder without changing its contents, when the developer runs <code>ingest</code>, then the summary shows 1 removed and 1 new document, and answers cite the new title.</li>
+<li class=""><b>Folder emptied</b>Given the library holds 15 documents and the folder is then emptied, when the developer runs <code>ingest</code>, then the summary shows 15 removed and the message &quot;No documents found in the document folder.&quot;</li>
+</ul></details>
+</section>
+<section class="req" id="r23">
+  <h3><span>2.3 Handle unreadable documents without stopping</span><span class="provrow"><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></span></h3>
+  <p class="oneliner">Bad files are listed with a reason; the rest still get processed.</p>
+  <p class="prose"><strong>As a</strong> developer, <strong>I want</strong> one bad file to be reported and skipped, <strong>so that</strong> a single problem doesn't block the rest of the collection, and I can still tell that the run was not fully successful.</p>
+  <details class="ac"><summary>Acceptance criteria — 5 (0 verified)</summary><ul>
+<li class=""><b>Password-protected</b>Given the folder holds 14 readable PDFs and 1 password-protected PDF, and the library is empty, when the developer runs <code>ingest</code>, then the summary shows 14 new and 1 failed, lists the protected file with the reason &quot;password-protected&quot;, ends with &quot;Ingest finished with 1 failed document(s).&quot;, and the run finishes with a failure result.</li>
+<li class=""><b>Damaged file</b>Given the folder holds a damaged file named like a PDF (for example a text file renamed to &quot;Policy.pdf&quot;), when the developer runs <code>ingest</code>, then that file is listed as failed with the reason &quot;not a readable PDF&quot; and all other documents are still processed.</li>
+<li class=""><b>Connection lost</b>Given the developer's internet connection is switched off part-way through a run, when the run ends, then each document that could not be read is listed with the reason &quot;temporary problem — try again later&quot;.</li>
+<li class=""><b>All readable</b>Given every PDF is readable, when the developer runs <code>ingest</code>, then the run ends with &quot;Ingest finished successfully.&quot; and finishes successfully.</li>
+<li class=""><b>Fixed file</b>Given a PDF failed in an earlier run and the developer then replaces it with a readable version, when the developer runs <code>ingest</code> again, then that document is counted as new and no longer appears in the failed list.</li>
+</ul></details>
+</section>
+<section class="req" id="r24">
+  <h3><span>2.4 Ask a question and get a cited answer (<code>ask</code>)</span><span class="provrow"><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></span></h3>
+  <p class="oneliner">Short answers with page-level citations, an honest not-found reply, and named gaps in partial answers.</p>
+  <p class="prose"><strong>As a</strong> developer, <strong>I want to</strong> ask a question in plain language and get a short answer with citations, <strong>so that</strong> I get the answer quickly and can check every fact at its source.</p>
+  <details class="ac"><summary>Acceptance criteria — 7 (0 verified)</summary><ul>
+<li class=""><b>Cited answer</b>Given the HR leave policy has been ingested, when the developer runs <code>ask &quot;How many vacation days can I carry over?&quot;</code>, then they see an answer of 150 words or fewer (excluding markers and Sources), in which every sentence carries at least one marker like [1], followed by a Sources list whose lines read &quot;[n] Document title, p. N&quot; or &quot;[n] Document title, pp. N–M&quot;.</li>
+<li class=""><b>Citations check out</b>Given the developer has run <code>ask &quot;How many vacation days can I carry over?&quot;</code>, when they open each cited document at each cited page, then every fact the answer attributes to that citation is on that page.</li>
+<li class=""><b>No duplicate sources</b>Given the travel policy states two different facts on the same page, when the developer asks a question whose answer uses both facts, then the Sources list shows that document and page only once.</li>
+<li class=""><b>Not found</b>When the developer asks a question that none of the documents answer (for example &quot;What is the CEO's favourite food?&quot;), then they see exactly &quot;I couldn't find this in the company documents.&quot; with no Sources list.</li>
+<li class=""><b>Partial answer</b>Given the documents state the meal allowance but say nothing about a parking allowance, when the developer asks &quot;What are the meal and parking allowances?&quot;, then the answer gives the meal allowance with a citation and ends with &quot;I couldn't find information about the parking allowance in the company documents.&quot;</li>
+<li class=""><b>Empty question</b>When the developer runs <code>ask</code> with no question, with <code>ask &quot;&quot;</code>, or with a question made only of spaces, then they see &quot;Please type a question.&quot; and no answer is attempted.</li>
+<li class=""><b>Empty library</b>Given the library holds no documents (because <code>ingest</code> was never run, the folder was emptied, or every document failed), when the developer runs <code>ask</code> with any question, then they see &quot;The library has no documents yet. Run ingest first.&quot;</li>
+</ul></details>
+</section>
+<section class="req" id="r25">
+  <h3><span>2.5 Measure answer quality (<code>eval</code>)</span><span class="provrow"><span class="src code">Codebase</span> <span class="src web">Web</span> <span class="src interview">Interview</span></span></h3>
+  <p class="oneliner">20 test questions scored against clear targets.</p>
+  <p class="prose"><strong>As a</strong> developer, <strong>I want to</strong> run a stored set of test questions and see clear quality scores, <strong>so that</strong> I can show the assistant is reliable and notice when a change makes it worse.</p>
+<p class="prose">The first three totals are labelled &quot;meets target&quot; or &quot;below target&quot;.</p>
+  <details class="ac"><summary>Acceptance criteria — 6 (0 verified)</summary><ul>
+<li class=""><b>Full report</b>Given the documents are ingested and the evaluation set has 20 questions, when the developer runs <code>eval</code>, then they see 20 result lines and four totals: hit rate, citation presence and p95 each labelled &quot;meets target&quot; or &quot;below target&quot;, and p50 labelled &quot;for information&quot;.</li>
+<li class=""><b>Unanswerable counted</b>Given an unanswerable test question gets the not-found reply, when the developer runs <code>eval</code>, then that question's line shows found as yes and cited as &quot;n/a&quot;.</li>
+<li class=""><b>Below target fails</b>Given a score falls below its target, when <code>eval</code> finishes, then that score is labelled &quot;below target&quot; and the run finishes with a failure result.</li>
+<li class=""><b>All targets met</b>Given all three targeted scores meet their targets, when <code>eval</code> finishes, then the run finishes successfully.</li>
+<li class=""><b>No questions</b>Given the evaluation file is missing or contains no questions, when the developer runs <code>eval</code>, then they see &quot;No evaluation questions found.&quot;, no scores are shown, and the run finishes with a failure result.</li>
+<li class=""><b>Empty library</b>Given the library holds no documents, when the developer runs <code>eval</code>, then they see &quot;The library has no documents yet. Run ingest first.&quot; and the run finishes with a failure result.</li>
+</ul></details>
+</section>
+<h2 id="scope">3. Scope and Boundaries</h2>
+<div class="cols"><div><h4>In-Scope</h4><ul><li>Reading the sample company policy PDFs in the document folder, including tables and text inside images.</li>
+<li>The <code>ingest</code>, <code>ask</code> and <code>eval</code> commands, used from a terminal by one developer.</li>
+<li>Keeping the library in step with the folder: new, updated, shortened, renamed and deleted documents.</li>
+<li>Clear reporting of unreadable documents and skipped non-PDF files.</li>
+<li>Cited answers, partial answers, and the not-found reply.</li>
+<li>The 20-question evaluation set and its quality report.</li></ul></div>
+<div><h4>Out-of-Scope</h4><ul><li>A web page or chat interface for asking questions (a later feature).</li>
+<li>Signing in, and any per-person access to documents (a later feature).</li>
+<li>Reading the user's email or calendar, drafting replies or proposing meetings (a later feature).</li>
+<li>An assistant that takes multi-step actions or chooses between tools (a later feature).</li>
+<li>Automatic publishing of the system from the code repository; setup is done by hand from the developer's machine.</li>
+<li>Pulling documents from company file-sharing sites, and showing different documents to different people.</li>
+<li>Reading file types other than PDF (they are skipped, see 2.1).</li>
+<li>Documents and questions in languages other than English.</li>
+<li>Several users working at the same time.</li>
+<li>Response-time guarantees for an individual question; the 8-second target applies to the evaluation set as a whole.</li></ul></div></div>
+<h2>Change Log</h2>
+<p><em>Dated amendments made after the spec was first written, typically by <code>/awos:spec</code> in Update Mode when a bug fix changed documented behavior. Each entry records the date, the source reference (bug id or fix description), and what behavior changed and why. Leave empty until the first amendment.</em></p>
+<footer>
+  This page is a <strong>review lens</strong> — the canonical, normative contract is <code>functional-spec.md</code> in this directory; approvals bind to it, and the technical detail behind the findings lives in <code>research-notes.md</code>.<br>
+  Generated 2026-11-16 from functional-spec.md (26023143080b), status <em>Draft</em> — 30 criteria, 0 verified. Rendered by AWOS (/awos:spec).
+</footer>
+</main>
+<script>
+  function tab(i, el) {
+    document.querySelectorAll('.tabbar button').forEach(function (b, j) { b.classList.toggle('active', j === i); });
+    document.querySelectorAll('.tabpanel').forEach(function (p, j) { p.classList.toggle('active', j === i); });
+  }
+</script>
+</body>
+</html>
